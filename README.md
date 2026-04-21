@@ -181,7 +181,7 @@ Docker is pre-installed on `ubuntu-latest` runners, which is all the Molecule Do
 
 1. **Validate inputs** — fails fast when `distro` is empty or `working_directory` is missing.
 2. **Install extra apt packages** (optional) — `sudo apt-get install` when `extra_apt_packages` is set.
-3. **`actions/setup-python`** — installs the requested Python version with pip cache.
+3. **`actions/setup-python`** — installs the requested Python version.
 4. **pip install** — `ansible` (+ optional version pin) and `molecule` + `molecule-plugins[docker]` + `docker` (+ optional version pin) + any `extra_pip_packages`.
 5. **`ansible-galaxy install -r`** (optional) — runs when the referenced `requirements.yml` is present.
 6. **`pip install -r`** (optional) — runs when the referenced `requirements.txt` is present.

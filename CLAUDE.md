@@ -62,7 +62,7 @@ See [README.md](README.md) for the full table.
 
 1. Validate inputs (`distro` non-empty, `working_directory` exists)
 2. Install `extra_apt_packages` via `apt-get` (optional)
-3. `actions/setup-python` with `pip` cache
+3. `actions/setup-python`
 4. `pip install` ansible + molecule (+ optional pins) + `molecule-plugins[docker]` + `docker` + `extra_pip_packages`
 5. `ansible-galaxy install -r` when `galaxy_requirements` file exists
 6. `pip install -r` when `pip_requirements` file exists

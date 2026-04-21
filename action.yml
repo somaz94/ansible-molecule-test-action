@@ -95,7 +95,6 @@ runs:
       uses: actions/setup-python@v6
       with:
         python-version: ${{ inputs.python_version }}
-        cache: pip
 
     - name: Install Ansible and Molecule
       shell: bash
