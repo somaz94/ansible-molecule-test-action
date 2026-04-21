@@ -222,6 +222,32 @@ Docker is pre-installed on `ubuntu-latest` runners, which is all the Molecule Do
 
 <br/>
 
+## Known Compatibility
+
+### `molecule-plugins[docker]` + `ansible-core` 2.19
+
+**Symptom** — `molecule test` fails in the `destroy` stage with:
+
+> Conditional result (True) was derived from value of type 'str' at "\<environment variable 'HOME'\>". Conditionals must have a boolean result.
+
+**Root cause** — `molecule-plugins[docker]`'s `destroy.yml` passes `"{{ lookup('env', 'HOME') }}"` (a string) to `when:`, which `ansible-core` 2.19+ rejects because conditionals must be booleans.
+
+**Workaround** — Pin `ansible-core` in your repo's `requirements.txt`:
+
+```text
+ansible-core>=2.15,<2.19
+```
+
+This action auto-runs `pip install -r requirements.txt` in the `working_directory`, so the pin takes effect without further wiring.
+
+**Tracking & exit plan**
+
+- Upstream: [`ansible/molecule-plugins`](https://github.com/ansible/molecule-plugins/issues) — watch for a release that makes the `destroy.yml` conditional a real boolean.
+- Once fixed, relax the pin to `ansible-core>=2.19.X,<3.0` (X = first fixed minor) and re-run CI.
+- Dependabot note: the repos that consume this action currently manage only the `github-actions` ecosystem, so the `ansible-core<2.19` cap is not auto-touched. Enabling Dependabot's `pip` ecosystem won't help relax the cap (Dependabot respects but does not widen version specifiers) and risks conflicting PRs if future `ansible-lint` / `molecule` releases require `ansible-core>=2.19`. Prefer a periodic manual review (e.g., quarterly) of the pin.
+
+<br/>
+
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
