@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Latest Tag](https://img.shields.io/github/v/tag/somaz94/ansible-molecule-test-action)](https://github.com/somaz94/ansible-molecule-test-action/tags)
 [![Top Language](https://img.shields.io/github/languages/top/somaz94/ansible-molecule-test-action)](https://github.com/somaz94/ansible-molecule-test-action)
-[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-Ansible%20Molecule%20Test-blue?logo=github)](https://github.com/marketplace/actions/ansible-molecule-test)
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-Ansible%20Molecule%20Test%20Action-blue?logo=github)](https://github.com/marketplace/actions/ansible-molecule-test-action)
 
 A composite GitHub Action that runs [Molecule](https://ansible.readthedocs.io/projects/molecule/) tests for an Ansible role or collection. Installs Python, Ansible, Molecule, and the Docker driver, then runs `molecule test` against the distro the caller specifies — typically from a matrix.
 

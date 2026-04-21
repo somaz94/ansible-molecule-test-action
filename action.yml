@@ -1,4 +1,4 @@
-name: Ansible Molecule Test
+name: Ansible Molecule Test Action
 description: Run molecule tests for an Ansible role or collection across Linux distros in one composite action.
 author: somaz94
 
