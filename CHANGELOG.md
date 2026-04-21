@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.0.1](https://github.com/somaz94/ansible-molecule-test-action/compare/v1.0.0...v1.0.1) (2026-04-21)
+
+### Documentation
+
+- add Requirements and Supported Distros sections to README ([cdb3b5c](https://github.com/somaz94/ansible-molecule-test-action/commit/cdb3b5ccdd25cad623d29808b7f57193749d2ce9))
+
+### Chores
+
+- rename action to 'Ansible Molecule Test Action' for marketplace ([dd172da](https://github.com/somaz94/ansible-molecule-test-action/commit/dd172dabd84479cebc9424380839b52e445446e5))
+
+### Contributors
+
+- somaz
+
+<br/>
+
 ## [v1.0.0](https://github.com/somaz94/ansible-molecule-test-action/releases/tag/v1.0.0) (2026-04-21)
 
 ### Features
