@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.0.2](https://github.com/somaz94/ansible-molecule-test-action/compare/v1.0.1...v1.0.2) (2026-04-21)
+
+### Documentation
+
+- add Known Compatibility section for ansible-core 2.19 issue ([4ad2f4e](https://github.com/somaz94/ansible-molecule-test-action/commit/4ad2f4e6defe0ac0bf2ee59780bc723e245a365c))
+
+### Continuous Integration
+
+- bump softprops/action-gh-release v2 to v3 for sibling-repo alignment ([8429e50](https://github.com/somaz94/ansible-molecule-test-action/commit/8429e503cae94b585ccac75312cad5777d08891d))
+
+### Contributors
+
+- somaz
+
+<br/>
+
 ## [v1.0.1](https://github.com/somaz94/ansible-molecule-test-action/compare/v1.0.0...v1.0.1) (2026-04-21)
 
 ### Documentation
