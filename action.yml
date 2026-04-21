@@ -1,0 +1,209 @@
+name: Ansible Molecule Test
+description: Run molecule tests for an Ansible role or collection across Linux distros in one composite action.
+author: somaz94
+
+branding:
+  icon: play-circle
+  color: red
+
+inputs:
+  distro:
+    description: "Target distro image tag exposed to molecule as MOLECULE_DISTRO (e.g., 'ubuntu2404', 'rockylinux9'). Caller typically drives this from a matrix."
+    required: true
+  scenario:
+    description: "Molecule scenario name. Passed to 'molecule test -s <scenario>'."
+    required: false
+    default: 'default'
+  python_version:
+    description: "Python version installed by actions/setup-python."
+    required: false
+    default: '3.12'
+  ansible_version:
+    description: "ansible version pin for pip (e.g., '9.5.1'). Empty installs the latest."
+    required: false
+    default: ''
+  molecule_version:
+    description: "molecule version pin for pip (e.g., '24.9.0'). Empty installs the latest."
+    required: false
+    default: ''
+  working_directory:
+    description: "Role or collection root where molecule and requirements live."
+    required: false
+    default: '.'
+  extra_pip_packages:
+    description: "Space-separated extra pip packages to install alongside ansible + molecule + molecule-plugins[docker] (e.g., 'pytest-testinfra yamllint')."
+    required: false
+    default: ''
+  extra_apt_packages:
+    description: "Space-separated extra apt packages to install on the runner before molecule runs (e.g., 'sshpass')."
+    required: false
+    default: ''
+  galaxy_requirements:
+    description: "Path to a Galaxy requirements.yml (relative to working_directory). Runs 'ansible-galaxy install -r' when the file exists."
+    required: false
+    default: 'requirements.yml'
+  pip_requirements:
+    description: "Path to a pip requirements.txt (relative to working_directory). Installs when the file exists."
+    required: false
+    default: 'requirements.txt'
+  verbose:
+    description: "Enable verbose molecule output (sets MOLECULE_VERBOSITY=1 and PY_COLORS/ANSIBLE_FORCE_COLOR)."
+    required: false
+    default: 'true'
+
+outputs:
+  test_result:
+    description: "Aggregated result of 'molecule test': 'pass' or 'fail'."
+    value: ${{ steps.molecule.outputs.result }}
+  tested_distro:
+    description: "The distro value that molecule executed against (echo of inputs.distro)."
+    value: ${{ steps.molecule.outputs.distro }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate inputs
+      shell: bash
+      env:
+        DISTRO: ${{ inputs.distro }}
+        WORKING_DIRECTORY: ${{ inputs.working_directory }}
+      run: |
+        set -euo pipefail
+        echo "::group::Validate inputs"
+        if [[ -z "${DISTRO// }" ]]; then
+          echo "::error::input 'distro' is required (e.g., ubuntu2404)"; exit 1
+        fi
+        if [[ ! -d "$WORKING_DIRECTORY" ]]; then
+          echo "::error::working_directory '$WORKING_DIRECTORY' is not a directory"; exit 1
+        fi
+        echo "::endgroup::"
+
+    - name: Install extra apt packages
+      if: inputs.extra_apt_packages != ''
+      shell: bash
+      env:
+        EXTRA_APT_PACKAGES: ${{ inputs.extra_apt_packages }}
+      run: |
+        set -euo pipefail
+        echo "::group::apt install ($EXTRA_APT_PACKAGES)"
+        sudo apt-get update -y
+        # shellcheck disable=SC2086
+        sudo apt-get install -y --no-install-recommends $EXTRA_APT_PACKAGES
+        echo "::endgroup::"
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python_version }}
+        cache: pip
+
+    - name: Install Ansible and Molecule
+      shell: bash
+      env:
+        ANSIBLE_VERSION: ${{ inputs.ansible_version }}
+        MOLECULE_VERSION: ${{ inputs.molecule_version }}
+        EXTRA_PIP_PACKAGES: ${{ inputs.extra_pip_packages }}
+      run: |
+        set -euo pipefail
+        echo "::group::pip install ansible + molecule"
+        python -m pip install --upgrade pip
+
+        if [[ -n "$ANSIBLE_VERSION" ]]; then
+          pip install "ansible==${ANSIBLE_VERSION}"
+        else
+          pip install ansible
+        fi
+
+        if [[ -n "$MOLECULE_VERSION" ]]; then
+          pip install "molecule==${MOLECULE_VERSION}" "molecule-plugins[docker]" docker
+        else
+          pip install molecule "molecule-plugins[docker]" docker
+        fi
+
+        if [[ -n "$EXTRA_PIP_PACKAGES" ]]; then
+          # shellcheck disable=SC2086
+          pip install $EXTRA_PIP_PACKAGES
+        fi
+
+        ansible --version
+        molecule --version
+        echo "::endgroup::"
+
+    - name: Install Galaxy requirements
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      env:
+        GALAXY_REQUIREMENTS: ${{ inputs.galaxy_requirements }}
+      run: |
+        set -euo pipefail
+        if [[ -n "$GALAXY_REQUIREMENTS" && -f "$GALAXY_REQUIREMENTS" ]]; then
+          echo "::group::ansible-galaxy install -r $GALAXY_REQUIREMENTS"
+          ansible-galaxy install -r "$GALAXY_REQUIREMENTS"
+          echo "::endgroup::"
+        else
+          echo "::notice::No galaxy requirements at '$GALAXY_REQUIREMENTS'; skipping"
+        fi
+
+    - name: Install pip requirements
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      env:
+        PIP_REQUIREMENTS: ${{ inputs.pip_requirements }}
+      run: |
+        set -euo pipefail
+        if [[ -n "$PIP_REQUIREMENTS" && -f "$PIP_REQUIREMENTS" ]]; then
+          echo "::group::pip install -r $PIP_REQUIREMENTS"
+          pip install -r "$PIP_REQUIREMENTS"
+          echo "::endgroup::"
+        else
+          echo "::notice::No pip requirements at '$PIP_REQUIREMENTS'; skipping"
+        fi
+
+    - name: Run Molecule test
+      id: molecule
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      env:
+        DISTRO: ${{ inputs.distro }}
+        SCENARIO: ${{ inputs.scenario }}
+        VERBOSE: ${{ inputs.verbose }}
+      run: |
+        set -o pipefail
+        echo "::group::molecule test -s $SCENARIO (distro=$DISTRO)"
+        export MOLECULE_DISTRO="$DISTRO"
+        export PY_COLORS=1
+        export ANSIBLE_FORCE_COLOR=1
+        if [[ "$VERBOSE" == "true" ]]; then
+          export MOLECULE_VERBOSITY=1
+        fi
+
+        set +e
+        molecule test -s "$SCENARIO"
+        rc=$?
+        set -e
+        echo "::endgroup::"
+
+        output_line() {
+          if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+            echo "$1" >>"$GITHUB_OUTPUT"
+          fi
+        }
+        output_line "distro=$DISTRO"
+
+        {
+          echo "### Molecule Test — $DISTRO"
+          echo ""
+          if [[ "$rc" -eq 0 ]]; then
+            echo "Scenario: \`$SCENARIO\` — **pass**"
+          else
+            echo "Scenario: \`$SCENARIO\` — **fail** (exit $rc)"
+          fi
+        } >>"${GITHUB_STEP_SUMMARY:-/dev/null}"
+
+        if [[ "$rc" -eq 0 ]]; then
+          output_line "result=pass"
+          exit 0
+        else
+          output_line "result=fail"
+          exit "$rc"
+        fi

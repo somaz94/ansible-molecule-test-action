@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install linters
+        run: |
+          python -m pip install --upgrade pip
+          pip install yamllint
+
+      - name: Run yamllint
+        run: yamllint -d relaxed action.yml .github/workflows/ tests/
+
+      - name: Run actionlint
+        uses: raven-actions/actionlint@v2
+        with:
+          cache: true
+
+  test-action:
+    name: Test Action (${{ matrix.distro }})
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [ubuntu2404, rockylinux9]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run action against fixture
+        id: molecule
+        uses: ./
+        with:
+          distro: ${{ matrix.distro }}
+          working_directory: tests/fixtures/sample_role
+          scenario: default
+
+      - name: Verify outputs
+        run: |
+          RESULT='${{ steps.molecule.outputs.test_result }}'
+          TESTED='${{ steps.molecule.outputs.tested_distro }}'
+          echo "test_result=${RESULT}"
+          echo "tested_distro=${TESTED}"
+          if [[ "${RESULT}" != "pass" ]]; then
+            echo "::error::expected test_result=pass, got '${RESULT}'"
+            exit 1
+          fi
+          if [[ "${TESTED}" != "${{ matrix.distro }}" ]]; then
+            echo "::error::expected tested_distro='${{ matrix.distro }}', got '${TESTED}'"
+            exit 1
+          fi
+          echo "[PASS] distro=${{ matrix.distro }}"
+
+  ci-result:
+    name: CI Result
+    if: always()
+    needs: [lint, test-action]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" ]]; then
+            echo "::error::lint failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test-action.result }}" != "success" ]]; then
+            echo "::error::test-action failed"
+            exit 1
+          fi
+          echo "All CI jobs passed"

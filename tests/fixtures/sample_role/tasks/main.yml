@@ -1,0 +1,8 @@
+---
+- name: Ensure /tmp/ansible-molecule-test-action.marker exists
+  ansible.builtin.copy:
+    dest: /tmp/ansible-molecule-test-action.marker
+    content: "fixture role applied\n"
+    owner: root
+    group: root
+    mode: '0644'

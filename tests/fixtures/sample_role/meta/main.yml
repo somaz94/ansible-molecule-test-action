@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  role_name: sample_role
+  namespace: somaz94
+  author: somaz94
+  description: Minimal role used to smoke-test ansible-molecule-test-action.
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+    - name: EL
+      versions:
+        - "9"
+  galaxy_tags:
+    - testing
+dependencies: []

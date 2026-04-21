@@ -1,0 +1,16 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Marker file exists
+      ansible.builtin.stat:
+        path: /tmp/ansible-molecule-test-action.marker
+      register: marker
+
+    - name: Assert marker was created by the role
+      ansible.builtin.assert:
+        that:
+          - marker.stat.exists
+          - marker.stat.isreg
+        fail_msg: "Expected /tmp/ansible-molecule-test-action.marker to exist"

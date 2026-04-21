@@ -1,0 +1,54 @@
+name: Smoke Test (Released Action)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: 'workflow run'
+        required: true
+        default: 'true'
+  workflow_run:
+    workflows: ["Create release"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    name: Smoke Test (${{ matrix.distro }})
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [ubuntu2404, debian12, rockylinux9]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run released action against fixture
+        id: molecule
+        uses: somaz94/ansible-molecule-test-action@v1
+        with:
+          distro: ${{ matrix.distro }}
+          working_directory: tests/fixtures/sample_role
+          scenario: default
+
+      - name: Verify outputs
+        run: |
+          RESULT='${{ steps.molecule.outputs.test_result }}'
+          TESTED='${{ steps.molecule.outputs.tested_distro }}'
+          echo "test_result=${RESULT}"
+          echo "tested_distro=${TESTED}"
+          if [[ "${RESULT}" != "pass" ]]; then
+            echo "::error::expected test_result=pass, got '${RESULT}'"
+            exit 1
+          fi
+          if [[ "${TESTED}" != "${{ matrix.distro }}" ]]; then
+            echo "::error::expected tested_distro='${{ matrix.distro }}', got '${TESTED}'"
+            exit 1
+          fi
+          echo "[PASS] smoke test distro=${{ matrix.distro }}"
