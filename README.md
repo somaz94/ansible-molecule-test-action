@@ -21,6 +21,39 @@ A composite GitHub Action that runs [Molecule](https://ansible.readthedocs.io/pr
 
 <br/>
 
+## Requirements
+
+- **Runner OS**: `ubuntu-latest` (the Docker driver needs the runner's pre-installed Docker daemon — macOS and Windows runners are not supported).
+- **Caller must run `actions/checkout`** before this action.
+- **Python 3.10+** is recommended (default `3.12`).
+
+<br/>
+
+## Supported Target Distros
+
+The `distro` input is exposed to Molecule as `MOLECULE_DISTRO` and is typically consumed by a `molecule.yml` like:
+
+```yaml
+platforms:
+  - name: instance
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2404}-ansible:latest"
+    ...
+```
+
+Any tag published under [`geerlingguy/docker-*-ansible`](https://hub.docker.com/u/geerlingguy) works. The distros validated in this action's own CI / smoke test are:
+
+| Distro tag | Family | Notes |
+|------------|--------|-------|
+| `ubuntu2204` | Ubuntu 22.04 (jammy) | common default |
+| `ubuntu2404` | Ubuntu 24.04 (noble) | smoke-tested every release |
+| `debian11` | Debian 11 (bullseye) | |
+| `debian12` | Debian 12 (bookworm) | smoke-tested every release |
+| `rockylinux9` | Rocky Linux 9 (EL9) | smoke-tested every release |
+
+You can point at any other image by authoring your own `molecule.yml` — the action itself is distro-agnostic.
+
+<br/>
+
 ## Quick Start
 
 ### Ansible role (matrix across distros)
