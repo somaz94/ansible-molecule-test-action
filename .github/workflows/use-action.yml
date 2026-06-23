@@ -27,7 +27,7 @@ jobs:
       matrix:
         distro: [ubuntu2404, debian12, rockylinux9]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Run released action against fixture
         id: molecule
